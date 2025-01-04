@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Defense Lobby Music</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body style="text-align: center; font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+    <h2>Tower Defense Lobby Music</h2>
+    <button id="playButton" style="padding: 10px 20px; font-size: 16px; margin: 10px;">Play/Stop Music</button>
+    <br>
+    <div id="status" style="margin: 10px;">Click to play</div>
+
+    <script>
+        let isPlaying = false;
+        
+        // Main synth for melody
+        const melodySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+        melodySynth.volume.value = -8;
+
+        // Bassline synth
+        const bassSynth = new Tone.MembraneSynth().toDestination();
+        bassSynth.volume.value = -10;
+
+        // Pad for background ambience
+        const pad = new Tone.PolySynth().toDestination();
+        const padChorus = new Tone.Chorus(4, 2.5, 0.5).toDestination();
+        pad.connect(padChorus);
+        pad.volume.value = -20;
+
+        // Bassline pattern
+        const bassLine = new Tone.Sequence((time, note) => {
+            bassSynth.triggerAttackRelease(note, "4n", time);
+        }, ["C2", "E2", "G2", "F2"]).start(0);
+
+        // Melody pattern
+        const melodyLine = new Tone.Sequence((time, note) => {
+            melodySynth.triggerAttackRelease(note, "8n", time);
+        }, ["E4", "G4", "C5", "D5", "C5", "B4", "A4"]).start(0);
+
+        // Pad chord progression
+        const chords = [
+            ["C3", "E3", "G3"], 
+            ["A2", "C3", "E3"], 
+            ["F2", "A2", "C3"], 
+            ["G2", "B2", "D3"]
+        ];
+        
+        let chordIndex = 0;
+
+        function playChords() {
+            if (!isPlaying) return;
+            pad.triggerAttackRelease(chords[chordIndex], "2n");
+            chordIndex = (chordIndex + 1) % chords.length;
+            setTimeout(playChords, 2000);
+        }
+
+        document.getElementById('playButton').addEventListener('click', async () => {
+            await Tone.start();
+            isPlaying = !isPlaying;
+            
+            if (isPlaying) {
+                document.getElementById('status').textContent = 'Playing...';
+                playChords();
+                Tone.Transport.start();
+            } else {
+                document.getElementById('status').textContent = 'Stopped';
+                Tone.Transport.stop();
+                melodySynth.releaseAll();
+                bassSynth.releaseAll();
+                pad.releaseAll();
+            }
+        });
+    </script>
+</body>
+</html>
